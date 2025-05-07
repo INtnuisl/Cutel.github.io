@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小榆和小贺互掐（程思思）</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ffe6f2;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #ff6699;
+            margin-bottom: 30px;
+        }
+        .character-selection {
+            margin-bottom: 20px;
+        }
+        .character-btn {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 30px;
+            background-color: #ffccdd;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .character-btn:hover {
+            background-color: #ff99bb;
+        }
+        .character-btn.selected {
+            background-color: #ff6699;
+            color: white;
+        }
+        .game-area {
+            display: none;
+            margin-top: 20px;
+        }
+        .character {
+            width: 150px;
+            height: 200px;
+            margin: 0 auto;
+            position: relative;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .xiaoyu {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150"><circle cx="50" cy="40" r="30" fill="%23ffccdd"/><path d="M30 80 Q50 100 70 80" stroke="black" fill="none"/><circle cx="40" cy="35" r="5" fill="black"/><circle cx="60" cy="35" r="5" fill="black"/></svg>');
+        }
+        .xiaohe {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150"><circle cx="50" cy="40" r="30" fill="%23ccddff"/><path d="M30 80 Q50 100 70 80" stroke="black" fill="none"/><circle cx="40" cy="35" r="5" fill="black"/><circle cx="60" cy="35" r="5" fill="black"/></svg>');
+        }
+        .target-area {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+        .target-area:hover {
+            opacity: 0.3;
+            background-color: rgba(255,0,0,0.3);
+        }
+        .face {
+            width: 40px;
+            height: 40px;
+            top: 30px;
+            left: 30px;
+        }
+        .arm {
+            width: 30px;
+            height: 60px;
+            top: 60px;
+            left: 15px;
+        }
+        .leg {
+            width: 30px;
+            height: 60px;
+            top: 100px;
+            left: 35px;
+        }
+        .waist {
+            width: 40px;
+            height: 30px;
+            top: 90px;
+            left: 30px;
+        }
+        .chat-container {
+            height: 200px;
+            overflow-y: auto;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            text-align: left;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        .player {
+            background-color: #ffccdd;
+            margin-left: auto;
+            margin-right: 0;
+        }
+        .partner {
+            background-color: #ccddff;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .stat {
+            font-weight: bold;
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .action-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            background-color: #ff6699;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .action-btn:hover {
+            background-color: #ff3385;
+            transform: scale(1.05);
+        }
+        .action-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6699;
+            margin: 10px 0;
+        }
+        .result {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #ff3385;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>小榆和小贺的互掐游戏</h1>
+        
+        <div class="character-selection">
+            <h3>选择你的角色：</h3>
+            <button class="character-btn" onclick="selectCharacter('xiaoyu')">扮演小榆(女生)</button>
+            <button class="character-btn" onclick="selectCharacter('xiaohe')">扮演小贺(男生)</button>
+        </div>
+        
+        <div id="gameArea" class="game-area">
+            <div class="stats">
+                <div class="stat">你的得分: <span id="playerScore">0</span></div>
+                <div class="stat">对方得分: <span id="partnerScore">0</span></div>
+            </div>
+            
+            <div class="timer">时间: <span id="timeLeft">30</span>秒</div>
+            
+            <div id="partnerCharacter" class="character">
+                <div class="target-area face" onclick="hit('face')"></div>
+                <div class="target-area arm" onclick="hit('arm')"></div>
+                <div class="target-area leg" onclick="hit('leg')"></div>
+                <div class="target-area waist" onclick="hit('waist')"></div>
+            </div>
+            
+            <div class="chat-container" id="chatContainer"></div>
+            
+            <div class="action-buttons">
+                <button class="action-btn" onclick="startGame()">开始游戏</button>
+                <button class="action-btn" id="endBtn" onclick="endGame()" disabled>结束游戏</button>
+            </div>
+            
+            <div class="result" id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏变量
+        let playerCharacter = '';
+        let gameActive = false;
+        let timeLeft = 30;
+        let timer;
+        let playerScore = 0;
+        let partnerScore = 0;
+        let hitCount = 0;
+        
+        // 对话内容
+        const xiaoyuDialogs = [
+            "哎呀！你敢掐我脸！",
+            "痛痛痛！轻点啊！",
+            "你再这样我生气了！",
+            "小贺你个大坏蛋！",
+            "我要告诉老师你欺负我！",
+            "哼！不理你了！",
+            "你完蛋了！看我怎么报复你！",
+            "啊啊啊！住手！"
+        ];
+        
+        const xiaoheDialogs = [
+            "哎哟！小榆你下手真狠！",
+            "别掐那里！痒！",
+            "你再掐我就要反击了！",
+            "小榆你太暴力了！",
+            "我要告诉阿姨你欺负我！",
+            "哼！男生不能打女生，太不公平了！",
+            "你等着！放学别跑！",
+            "停停停！我认输！"
+        ];
+        
+        const playerTaunts = [
+            "看招！",
+            "接我一招！",
+            "让你欺负我！",
+            "知道我的厉害了吧！",
+            "痛不痛？",
+            "还敢不敢了？",
+            "这就是代价！",
+            "认输吧！"
+        ];
+        
+        // 选择角色
+        function selectCharacter(character) {
+            playerCharacter = character;
+            document.querySelectorAll('.character-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+            
+            // 设置游戏区域
+            document.getElementById('gameArea').style.display = 'block';
+            const partnerChar = document.getElementById('partnerCharacter');
+            partnerChar.className = 'character ' + (character === 'xiaoyu' ? 'xiaohe' : 'xiaoyu');
+            
+            // 根据角色禁用部位
+            if (character === 'xiaohe') { // 男生不能掐脸
+                document.querySelector('.face').style.pointerEvents = 'none';
+            }
+        }
+        
+        // 开始游戏
+        function startGame() {
+            if (!playerCharacter) {
+                alert('请先选择角色！');
+                return;
+            }
+            
+            gameActive = true;
+            playerScore = 0;
+            partnerScore = 0;
+            hitCount = 0;
+            timeLeft = 30;
+            
+            document.getElementById('playerScore').textContent = playerScore;
+            document.getElementById('partnerScore').textContent = partnerScore;
+            document.getElementById('timeLeft').textContent = timeLeft;
+            document.getElementById('endBtn').disabled = false;
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('chatContainer').innerHTML = '';
+            
+            // 启动计时器
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timeLeft').textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+            
+            // 对方随机攻击
+            setTimeout(partnerAttack, 2000);
+            
+            addMessage('系统', '游戏开始！看谁掐得更准更快！', 'system');
+        }
+        
+        // 结束游戏
+        function endGame() {
+            gameActive = false;
+            clearInterval(timer);
+            document.getElementById('endBtn').disabled = true;
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            
+            if (playerScore > partnerScore) {
+                resultDiv.textContent = '你赢了！对方被你掐得求饶！';
+                resultDiv.style.color = '#4CAF50';
+            } else if (playerScore < partnerScore) {
+                resultDiv.textContent = '你输了！被对方掐得太惨了！';
+                resultDiv.style.color = '#F44336';
+            } else {
+                resultDiv.textContent = '平局！你们势均力敌！';
+                resultDiv.style.color = '#FF9800';
+            }
+            
+            addMessage('系统', '游戏结束！最终得分 - 你: ' + playerScore + ' vs 对方: ' + partnerScore, 'system');
+        }
+        
+        // 玩家攻击
+        function hit(bodyPart) {
+            if (!gameActive) return;
+            
+            hitCount++;
+            
+            // 计算得分 (不同部位不同分值)
+            let points = 1;
+            switch (bodyPart) {
+                case 'face': points = 3; break;
+                case 'waist': points = 2; break;
+                default: points = 1;
+            }
+            
+            playerScore += points;
+            document.getElementById('playerScore').textContent = playerScore;
+            
+            // 显示攻击消息
+            const partNames = {face: '脸', arm: '胳膊', leg: '腿', waist: '腰'};
+            const taunt = playerTaunts[Math.floor(Math.random() * playerTaunts.length)];
+            addMessage(playerCharacter === 'xiaoyu' ? '小榆' : '小贺', `${taunt} (掐${partNames[bodyPart]} +${points}分)`, 'player');
+            
+            // 对方反应
+            setTimeout(() => {
+                const dialogs = playerCharacter === 'xiaoyu' ? xiaoheDialogs : xiaoyuDialogs;
+                const reaction = dialogs[Math.floor(Math.random() * dialogs.length)];
+                addMessage(playerCharacter === 'xiaoyu' ? '小贺' : '小榆', reaction, 'partner');
+            }, 500);
+            
+            // 对方反击
+            if (Math.random() > 0.7) {
+                setTimeout(partnerAttack, 1000);
+            }
+            
+            // 每5次攻击加快游戏节奏
+            if (hitCount % 5 === 0) {
+                timeLeft = Math.max(5, timeLeft - 2);
+                document.getElementById('timeLeft').textContent = timeLeft;
+                addMessage('系统', '节奏加快了！时间减少2秒！', 'system');
+            }
+        }
+        
+        // 对方攻击
+        function partnerAttack() {
+            if (!gameActive) return;
+            
+            // 对方得分
+            const points = 1 + Math.floor(Math.random() * 2); // 1-2分
+            partnerScore += points;
+            document.getElementById('partnerScore').textContent = partnerScore;
+            
+            // 显示攻击消息
+            const partNames = ['脸', '胳膊', '腿', '腰'];
+            const part = partNames[Math.floor(Math.random() * partNames.length)];
+            const dialogs = playerCharacter === 'xiaoyu' ? [
+                "小贺掐了你的" + part + " +" + points + "分",
+                "小贺偷袭你的" + part + " +" + points + "分",
+                "小贺突然掐你" + part + " +" + points + "分"
+            ] : [
+                "小榆掐了你的" + part + " +" + points + "分",
+                "小榆偷袭你的" + part + " +" + points + "分",
+                "小榆突然掐你" + part + " +" + points + "分"
+            ];
+            
+            const attackMsg = dialogs[Math.floor(Math.random() * dialogs.length)];
+            addMessage(playerCharacter === 'xiaoyu' ? '小贺' : '小榆', attackMsg, 'partner');
+            
+            // 玩家反应
+            setTimeout(() => {
+                const dialogs = playerCharacter === 'xiaoyu' ? xiaoyuDialogs : xiaoheDialogs;
+                const reaction = dialogs[Math.floor(Math.random() * dialogs.length)];
+                addMessage(playerCharacter === 'xiaoyu' ? '小榆' : '小贺', reaction, 'player');
+            }, 500);
+        }
+        
+        // 添加消息到聊天框
+        function addMessage(sender, text, type) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + type;
+            messageDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
